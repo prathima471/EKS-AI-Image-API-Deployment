@@ -1,4 +1,4 @@
-# 📖 AI Image API — Study Guide
+j8# 📖 AI Image API — Study Guide
 ## Read This Tonight Before Tomorrow's Session
 
 ---

@@ -1,0 +1,208 @@
+# ─────────────────────────────────────────────────────────────
+# AI Image Platform — CI/CD Pipeline
+# ─────────────────────────────────────────────────────────────
+# Triggers on push to main branch
+# 3 stages: Test → Build & Push → Deploy
+# Builds TWO services: API + Worker
+# ─────────────────────────────────────────────────────────────
+
+name: Deploy AI Image Platform
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]       
+
+env:
+  AWS_REGION: us-east-1
+  EKS_CLUSTER: eks-ai-image-dev
+  ECR_API_REPO: eks-ai-image-dev/api-service
+  ECR_WORKER_REPO: eks-ai-image-dev/worker-service
+
+# ─────────────────────────────────────────────────────────────
+# JOB 1: TEST — Lint and test both services
+# ─────────────────────────────────────────────────────────────
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Test API Service
+      - name: Install API dependencies
+        run: |
+          pip install -r api-service/requirements.txt
+          pip install flake8
+
+      - name: Lint API service
+        run: |
+          flake8 api-service/main.py --max-line-length=120 --ignore=E501,W503
+
+      - name: Test API imports
+        run: |
+          cd api-service
+          python -c "from main import app; print('API service imports OK')"
+
+      # Test Worker Service
+      - name: Install Worker dependencies
+        run: |
+          pip install -r worker-service/requirements.txt
+
+      - name: Lint Worker service
+        run: |
+          flake8 worker-service/main.py --max-line-length=120 --ignore=E501,W503
+
+      - name: Test Worker imports
+        run: |
+          cd worker-service
+          python -c "from main import app; print('Worker service imports OK')"
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 2: BUILD — Build Docker images, scan, push to ECR
+  # ─────────────────────────────────────────────────────────────
+  build:
+    name: Build & Push
+    runs-on: ubuntu-latest
+    needs: test                        # Only runs if tests pass!
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'  # Only on push to main
+    
+    permissions:
+      id-token: write                  # Needed for OIDC authentication
+      contents: read
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}    # Pass tag to deploy job
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Generate image tag from git SHA (unique per commit)
+      - name: Set image tag
+        id: meta
+        run: echo "tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      # Authenticate to AWS using OIDC (no stored credentials!)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Login to ECR
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ── Build API Service ──
+      - name: Build API Docker image
+        run: |
+          docker build -t ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_API_REPO }}:${{ steps.meta.outputs.tag }} \
+                       -t ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_API_REPO }}:latest \
+                       ./api-service
+
+      # Scan API image for vulnerabilities
+      - name: Scan API image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_API_REPO }}:${{ steps.meta.outputs.tag }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: 0                  # Don't fail build on vulnerabilities (warning only)
+
+      # Push API image to ECR
+      - name: Push API image to ECR
+        run: |
+          docker push ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_API_REPO }}:${{ steps.meta.outputs.tag }}
+          docker push ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_API_REPO }}:latest
+
+      # ── Build Worker Service ──
+      - name: Build Worker Docker image
+        run: |
+          docker build -t ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }}:${{ steps.meta.outputs.tag }} \
+                       -t ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }}:latest \
+                       ./worker-service
+
+      # Scan Worker image for vulnerabilities
+      - name: Scan Worker image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }}:${{ steps.meta.outputs.tag }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: 0
+
+      # Push Worker image to ECR
+      - name: Push Worker image to ECR
+        run: |
+          docker push ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }}:${{ steps.meta.outputs.tag }}
+          docker push ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }}:latest
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 3: DEPLOY — Deploy to EKS using Helm
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to EKS
+    runs-on: ubuntu-latest
+    needs: build                       # Only runs if build passes!
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Authenticate to AWS
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Get ECR registry URL
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Connect kubectl to EKS
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER }}
+
+      # Deploy with Helm — both services at once!
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install ai-image ./helm-chart \
+            --set api.image.repository=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_API_REPO }} \
+            --set api.image.tag=${{ needs.build.outputs.image_tag }} \
+            --set worker.image.repository=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }} \
+            --set worker.image.tag=${{ needs.build.outputs.image_tag }} \
+            --wait \
+            --timeout 300s
+
+      # Verify deployment
+      - name: Verify deployment
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods
+          echo ""
+          echo "=== Services ==="
+          kubectl get svc
+          echo ""
+          echo "=== Ingress ==="
+          kubectl get ingress
+          echo ""
+          echo "=== Deployment Status ==="
+          kubectl rollout status deployment/ai-image-api-deployment --timeout=120s
+          kubectl rollout status deployment/ai-image-worker-deployment --timeout=120s

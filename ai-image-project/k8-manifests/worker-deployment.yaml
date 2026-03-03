@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-image-worker-deployment
+  labels:
+    app: ai-image-worker
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-image-worker
+  template:
+    metadata:
+      labels:
+        app: ai-image-worker
+        tier: backend
+    spec:
+      containers:
+      - name: ai-image-worker
+        image: ai-image-worker:1.0.0
+        ports:
+        - containerPort: 8001
+        env:
+          - name: DATABASE_URL
+            value: "postgresql://postgres:postgres@postgres-service:5432/imagedb"
+          - name: REDIS_HOST
+            value: "redis-service"
+          - name: REDIS_PORT
+            value: "6379"
+          - name: S3_BUCKET
+            value: "ai-image-bucket"
+          - name: AWS_REGION
+            value: "us-east-1"
+          - name: ENVIRONMENT
+            value: "production"
+          - name: APP_VERSION
+            value: "1.0.0"
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "1000m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 10    ← Wait before first check
+          periodSeconds: 15          ← Check every 15 seconds         
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8001
+          initialDelaySeconds: 10    ← Wait before first check
+          periodSeconds: 15          ← Check every 15 seconds

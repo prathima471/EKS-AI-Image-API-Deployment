@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-image-api-deployment
+  labels:
+    app: ai-image-api
+    tier: frontend
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: ai-image-api
+  template:
+    metadata:
+      labels:
+        app: ai-image-api
+        tier: frontend
+    spec:
+      containers:
+      - name: ai-image-api
+        image: {{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}
+        imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.api.port }}
+        env:
+          - name: DATABASE_URL
+            value: "postgresql://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres-service:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
+          - name: REDIS_HOST
+            value: "redis-service"
+          - name: REDIS_PORT
+            value: "{{ .Values.redis.port }}"
+          - name: S3_BUCKET
+            value: {{ .Values.env.s3Bucket }}
+          - name: AWS_REGION
+            value: {{ .Values.env.awsRegion }}
+          - name: ENVIRONMENT
+            value: {{ .Values.env.environment }}
+          - name: APP_VERSION
+            value: {{ .Values.env.appVersion }}
+        resources:
+          requests:
+            cpu: {{ .Values.api.resources.requests.cpu }}
+            memory: {{ .Values.api.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.api.resources.limits.cpu }}
+            memory: {{ .Values.api.resources.limits.memory }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.api.probes.liveness.path }}
+            port: {{ .Values.api.port }}
+          initialDelaySeconds: {{ .Values.api.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.api.probes.liveness.periodSeconds }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.api.probes.readiness.path }}
+            port: {{ .Values.api.port }}
+          initialDelaySeconds: {{ .Values.api.probes.readiness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.api.probes.readiness.periodSeconds }}

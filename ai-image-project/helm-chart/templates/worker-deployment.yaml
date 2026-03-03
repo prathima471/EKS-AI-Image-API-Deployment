@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-image-worker-deployment
+  labels:
+    app: ai-image-worker
+    tier: backend
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  selector:
+    matchLabels:
+      app: ai-image-worker
+  template:
+    metadata:
+      labels:
+        app: ai-image-worker
+        tier: backend
+    spec:
+      containers:
+      - name: ai-image-worker
+        image: {{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}
+        imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.worker.port }}
+        env:
+          - name: DATABASE_URL
+            value: "postgresql://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres-service:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
+          - name: REDIS_HOST
+            value: "redis-service"
+          - name: REDIS_PORT
+            value: "{{ .Values.redis.port }}"
+          - name: S3_BUCKET
+            value: {{ .Values.env.s3Bucket }}
+          - name: AWS_REGION
+            value: {{ .Values.env.awsRegion }}
+          - name: ENVIRONMENT
+            value: {{ .Values.env.environment }}
+          - name: APP_VERSION
+            value: {{ .Values.env.appVersion }}
+        resources:
+          requests:
+            cpu: {{ .Values.worker.resources.requests.cpu }}
+            memory: {{ .Values.worker.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.worker.resources.limits.cpu }}
+            memory: {{ .Values.worker.resources.limits.memory }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.worker.probes.liveness.path }}
+            port: {{ .Values.worker.port }}
+          initialDelaySeconds: {{ .Values.worker.probes.liveness.initialDelaySeconds }}
+          periodSeconds: {{ .Values.worker.probes.liveness.periodSeconds }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.worker.probes.readiness.path }}
+            port: {{ .Values.worker.port }}
+          initialDelaySeconds: {{ .Values.worker.probes.readiness.initialDelaySeconds }}

@@ -1,0 +1,100 @@
+# ── API Service ──
+api:
+  replicas: 3
+  image:
+    repository: ai-image-api
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  port: 8000
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPU: 70
+  probes:
+    liveness:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 15
+    readiness:
+      path: /ready
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+# ── Worker Service ──
+worker:
+  replicas: 2
+  image:
+    repository: ai-image-worker
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  port: 8001
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "512Mi"
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 8
+    targetCPU: 60
+  probes:
+    liveness:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 15
+    readiness:
+      path: /ready
+      initialDelaySeconds: 5
+      periodSeconds: 10
+
+# ── PostgreSQL ──
+postgres:
+  image: postgres:15
+  port: 5432
+  database: imagedb
+  username: postgres
+  password: postgres
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+# ── Redis ──
+redis:
+  image: redis:7-alpine
+  port: 6379
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+
+# ── Environment ──
+env:
+  environment: dev
+  appVersion: "1.0.0"
+  s3Bucket: ai-image-bucket
+  awsRegion: us-east-1
+
+# ── Ingress ──
+ingress:
+  enabled: true
+  className: alb
+  scheme: internet-facing
+  targetType: ip
