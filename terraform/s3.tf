@@ -2,7 +2,7 @@
 # API uploads images here, Worker downloads from here
 resource "aws_s3_bucket" "images" {
   bucket        = "${local.cluster_name}-images-${data.aws_caller_identity.current.account_id}"
-  force_delete  = true                     # Allows terraform destroy with objects inside
+  force_destroy  = true                     # Allows terraform destroy with objects inside
 
   tags = {
     Name = "${local.cluster_name}-images"
