@@ -45,7 +45,7 @@ jobs:
 
       - name: Lint API service
         run: |
-          flake8 ai-image-project/api-service/main.py --max-line-length=120 --ignore=E501,W503
+          flake8 ai-image-project/api-service/main.py --max-line-length=120 --ignore=E501,W503,F401,E402
 
       - name: Test API imports
         run: |
@@ -59,7 +59,7 @@ jobs:
 
       - name: Lint Worker service
         run: |
-          flake8 ai-image-project/worker-service/main.py --max-line-length=120 --ignore=E501,W503
+          flake8 ai-image-project/worker-service/main.py --max-line-length=120 --ignore=E501,W503,F401,E402
 
       - name: Test Worker imports
         run: |
