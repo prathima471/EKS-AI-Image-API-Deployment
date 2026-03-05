@@ -95,7 +95,7 @@ async def lifespan(app: FastAPI):
         logger.error(f"S3 client failed: {e}")
         s3_client = None
 
-    yield  # App runs here
+    yield  # App runs heree
 
     # Cleanup on shutdown
     if db_pool:
