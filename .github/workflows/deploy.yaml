@@ -37,7 +37,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Test API Service
+      # Test API Service here
       - name: Install API dependencies
         run: |
           pip install -r ai-image-project/api-service/requirements.txt
