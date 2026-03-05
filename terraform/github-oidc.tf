@@ -43,6 +43,30 @@ resource "aws_iam_role_policy_attachment" "github_eks" {
   role       = aws_iam_role.github_actions.name
 }
 
+# Custom policy for EKS + Helm deploy access
+resource "aws_iam_policy" "github_eks_deploy" {
+  name = "${local.cluster_name}-github-eks-deploy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "eks:DescribeCluster",
+          "eks:ListClusters",
+          "eks:AccessKubernetesApi"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "github_eks_deploy" {
+  policy_arn = aws_iam_policy.github_eks_deploy.arn
+  role       = aws_iam_role.github_actions.name
+}
 # Output the ARN (this is your secret!)
 output "github_actions_role_arn" {
   description = "Add this as AWS_ROLE_ARN secret in GitHub"
