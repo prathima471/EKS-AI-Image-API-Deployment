@@ -4,27 +4,14 @@ kind: Ingress
 metadata:
   name: ai-image-ingress
   annotations:
-    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
     alb.ingress.kubernetes.io/scheme: {{ .Values.ingress.scheme }}
+    alb.ingress.kubernetes.io/target-type: {{ .Values.ingress.targetType }}
 spec:
+  ingressClassName: alb
   rules:
   - http:
       paths:
-      - path: /app
-        pathType: Prefix
-        backend:
-          service:
-            name: ai-image-api-service
-            port:
-              number: 80
-      - path: /docs
-        pathType: Prefix
-        backend:
-          service:
-            name: ai-image-api-service
-            port:
-              number: 80
-      - path: /health
+      - path: /
         pathType: Prefix
         backend:
           service:
