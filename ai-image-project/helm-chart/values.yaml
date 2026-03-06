@@ -14,7 +14,7 @@ api:
       cpu: "200m"
       memory: "128Mi"
   autoscaling:
-    enabled: true
+    enabled: false
     minReplicas: 2
     maxReplicas: 10
     targetCPU: 70
@@ -44,7 +44,7 @@ worker:
       cpu: "200m"
       memory: "128Mi"
   autoscaling:
-    enabled: true
+    enabled: false
     minReplicas: 1
     maxReplicas: 8
     targetCPU: 60
@@ -60,6 +60,7 @@ worker:
 
 # ── PostgreSQL ──
 postgres:
+  enabled: false              # Use RDS instead
   image: postgres:15
   port: 5432
   database: imagedb
@@ -75,6 +76,7 @@ postgres:
 
 # ── Redis ──
 redis:
+  enabled: false              # Use ElastiCache instead
   image: redis:7-alpine
   port: 6379
   resources:
@@ -89,8 +91,10 @@ redis:
 env:
   environment: dev
   appVersion: "1.0.0"
-  s3Bucket: ai-image-bucket
+  s3Bucket: eks-ai-image-dev-images-123054099308
   awsRegion: us-east-1
+  databaseUrl: "postgresql://postgres:postgres123!@eks-ai-image-dev-postgres.cwna6kkewysn.us-east-1.rds.amazonaws.com:5432/imagedb"
+  redisHost: "eks-ai-image-dev-redis.fnswe7.0001.use1.cache.amazonaws.com"
 
 # ── Ingress ──
 ingress:
