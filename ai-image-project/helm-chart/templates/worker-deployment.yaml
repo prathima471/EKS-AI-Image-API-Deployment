@@ -24,9 +24,9 @@ spec:
         - containerPort: {{ .Values.worker.port }}
         env:
           - name: DATABASE_URL
-            value: "postgresql://{{ .Values.postgres.username }}:{{ .Values.postgres.password }}@postgres-service:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}"
+            value: {{ .Values.env.databaseUrl }}
           - name: REDIS_HOST
-            value: "redis-service"
+            value: {{ .Values.env.redisHost }}
           - name: REDIS_PORT
             value: "{{ .Values.redis.port }}"
           - name: S3_BUCKET
