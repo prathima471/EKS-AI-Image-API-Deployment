@@ -117,7 +117,7 @@ app = FastAPI(
 @app.get("/health", tags=["Health"])
 async def health():
     """Liveness probe — is the app process alive?"""
-    return {"status": "healthy", "service": "api", "version": APP_VERSION}
+    return {"status": "healthy", "service": "api", "version": APP_VERSION, "message": "GitOps deployment test"}
 
 
 @app.get("/ready", tags=["Health"])
