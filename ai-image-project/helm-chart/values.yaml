@@ -3,7 +3,7 @@ api:
   replicas: 1
   image:
     repository: 123054099308.dkr.ecr.us-east-1.amazonaws.com/eks-ai-image-dev/api-service
-    tag: "latest"
+    tag: "abf3b20"
     pullPolicy: IfNotPresent
   port: 8000
   resources:
@@ -27,13 +27,12 @@ api:
       path: /ready
       initialDelaySeconds: 5
       periodSeconds: 10
-
 # ── Worker Service ──
 worker:
   replicas: 1
   image:
     repository: 123054099308.dkr.ecr.us-east-1.amazonaws.com/eks-ai-image-dev/worker-service
-    tag: "latest"
+    tag: "abf3b20"
     pullPolicy: IfNotPresent
   port: 8001
   resources:
@@ -57,10 +56,9 @@ worker:
       path: /ready
       initialDelaySeconds: 5
       periodSeconds: 10
-
 # ── PostgreSQL ──
 postgres:
-  enabled: false              # Use RDS instead
+  enabled: false # Use RDS instead
   image: postgres:15
   port: 5432
   database: imagedb
@@ -73,10 +71,9 @@ postgres:
     limits:
       cpu: "200m"
       memory: "256Mi"
-
 # ── Redis ──
 redis:
-  enabled: false              # Use ElastiCache instead
+  enabled: false # Use ElastiCache instead
   image: redis:7-alpine
   port: 6379
   resources:
@@ -86,7 +83,6 @@ redis:
     limits:
       cpu: "100m"
       memory: "64Mi"
-
 # ── Environment ──
 env:
   environment: dev
@@ -95,26 +91,21 @@ env:
   awsRegion: us-east-1
   databaseUrl: "postgresql://postgres:postgres123!@eks-ai-image-dev-postgres.cwna6kkewysn.us-east-1.rds.amazonaws.com:5432/imagedb"
   redisHost: "eks-ai-image-dev-redis.fnswe7.0001.use1.cache.amazonaws.com"
-
 # ── Ingress ──
 ingress:
   enabled: true
   className: alb
   scheme: internet-facing
   targetType: ip
-
 # ---------------------------------------------------------
 # Monitoring (Prometheus + Grafana)
 # Disabled for dev cluster because t3.micro nodes are small
 # Enable when cluster has larger instances
 # ---------------------------------------------------------
-
 monitoring:
   enabled: false
-
 # Example configuration used during testing
 # Uncomment and deploy with ArgoCD or Helm when needed
-
 # alertmanager:
 #   enabled: false
 
