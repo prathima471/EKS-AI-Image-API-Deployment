@@ -147,62 +147,62 @@ jobs:
           docker push ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }}:${{ steps.meta.outputs.tag }}
           docker push ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }}:latest
 
-  # ─────────────────────────────────────────────────────────────
-  # JOB 3: DEPLOY — Deploy to EKS using Helm
-  # ─────────────────────────────────────────────────────────────
-  deploy:
-    name: Deploy to EKS
-    runs-on: ubuntu-latest
-    needs: build                       # Only runs if build passes!
+  # # ─────────────────────────────────────────────────────────────
+  # # JOB 3: DEPLOY — Deploy to EKS using Helm
+  # # ─────────────────────────────────────────────────────────────
+  # deploy:
+  #   name: Deploy to EKS
+  #   runs-on: ubuntu-latest
+  #   needs: build                       # Only runs if build passes!
 
-    permissions:
-      id-token: write
-      contents: read
+  #   permissions:
+  #     id-token: write
+  #     contents: read
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      # Authenticate to AWS
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+  #     # Authenticate to AWS
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+  #         aws-region: ${{ env.AWS_REGION }}
 
-      # Get ECR registry URL
-      - name: Login to Amazon ECR
-        id: ecr-login
-        uses: aws-actions/amazon-ecr-login@v2
+  #     # Get ECR registry URL
+  #     - name: Login to Amazon ECR
+  #       id: ecr-login
+  #       uses: aws-actions/amazon-ecr-login@v2
 
-      # Connect kubectl to EKS
-      - name: Configure kubectl
-        run: |
-          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER }}
+  #     # Connect kubectl to EKS
+  #     - name: Configure kubectl
+  #       run: |
+  #         aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER }}
 
-      # Deploy with Helm — both services at once!
-      - name: Deploy with Helm
-        run: |
-          helm upgrade --install ai-image ./ai-image-project/helm-chart \
-            --set api.image.repository=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_API_REPO }} \
-            --set api.image.tag=${{ needs.build.outputs.image_tag }} \
-            --set worker.image.repository=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }} \
-            --set worker.image.tag=${{ needs.build.outputs.image_tag }} \
-            --wait \
-            --timeout 300s
+  #     # Deploy with Helm — both services at once!
+  #     - name: Deploy with Helm
+  #       run: |
+  #         helm upgrade --install ai-image ./ai-image-project/helm-chart \
+  #           --set api.image.repository=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_API_REPO }} \
+  #           --set api.image.tag=${{ needs.build.outputs.image_tag }} \
+  #           --set worker.image.repository=${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }} \
+  #           --set worker.image.tag=${{ needs.build.outputs.image_tag }} \
+  #           --wait \
+  #           --timeout 300s
 
-      # Verify deployment
-      - name: Verify deployment
-        run: |
-          echo "=== Pods ==="
-          kubectl get pods
-          echo ""
-          echo "=== Services ==="
-          kubectl get svc
-          echo ""
-          echo "=== Ingress ==="
-          kubectl get ingress
-          echo ""
-          echo "=== Deployment Status ==="
-          kubectl rollout status deployment/ai-image-api-deployment --timeout=120s
-          kubectl rollout status deployment/ai-image-worker-deployment --timeout=120s
+  #     # Verify deployment
+  #     - name: Verify deployment
+  #       run: |
+  #         echo "=== Pods ==="
+  #         kubectl get pods
+  #         echo ""
+  #         echo "=== Services ==="
+  #         kubectl get svc
+  #         echo ""
+  #         echo "=== Ingress ==="
+  #         kubectl get ingress
+  #         echo ""
+  #         echo "=== Deployment Status ==="
+  #         kubectl rollout status deployment/ai-image-api-deployment --timeout=120s
+  #         kubectl rollout status deployment/ai-image-worker-deployment --timeout=120s
