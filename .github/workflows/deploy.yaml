@@ -80,6 +80,9 @@ jobs:
       id-token: write                  # Needed for OIDC authentication
       contents: read
 
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}      
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -145,9 +148,45 @@ jobs:
           docker push ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }}:${{ steps.meta.outputs.tag }}
           docker push ${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_WORKER_REPO }}:latest
 
+# ─────────────────────────────────────────────────────────────
+# JOB 3: UPDATE HELM VALUES — Trigger ArgoCD deployment
+# ─────────────────────────────────────────────────────────────
+  update-values:
+    name: Update Helm values for ArgoCD
+    runs-on: ubuntu-latest
+    needs: build
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install yq
+        run: |
+          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Update image tags in values.yaml
+        run: |
+          yq -i '.api.image.tag = "${{ needs.build.outputs.image_tag }}"' ai-image-project/helm-chart/values.yaml
+          yq -i '.worker.image.tag = "${{ needs.build.outputs.image_tag }}"' ai-image-project/helm-chart/values.yaml
+      - name: Commit updated values.yaml
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add ai-image-project/helm-chart/values.yaml
+          git commit -m "Update image tag to ${{ needs.build.outputs.image_tag }}" || echo "No changes"
+          git push origin main              
+
   # # ─────────────────────────────────────────────────────────────
-  # # JOB 3: DEPLOY — Deploy to EKS using Helm
+  # # JOB 3: DEPLOY — Deploy to EKS using Helm via CI(OLD DEPLOYMENT METHOD)
   # # ─────────────────────────────────────────────────────────────
+  # This is kept for reference.
+  # In this project ArgoCD performs deployments automatically.      
   # deploy:
   #   name: Deploy to EKS
   #   runs-on: ubuntu-latest
