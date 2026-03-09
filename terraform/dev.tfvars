@@ -10,9 +10,9 @@ private_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
 # EKS
 cluster_version    = "1.29"
 node_instance_type = "t3.micro"
-node_desired_size  = 3
+node_desired_size  = 5
 node_min_size      = 1
-node_max_size      = 3
+node_max_size      = 6
 
 # RDS PostgreSQL
 db_instance_class = "db.t3.micro"

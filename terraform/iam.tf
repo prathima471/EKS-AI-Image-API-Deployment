@@ -98,3 +98,8 @@ resource "aws_iam_role_policy_attachment" "app_pod_s3" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
   role       = aws_iam_role.app_pod.name
 }
+# Give nodes S3 access (for API and Worker pods)
+resource "aws_iam_role_policy_attachment" "node_s3" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  role       = aws_iam_role.node.name
+}

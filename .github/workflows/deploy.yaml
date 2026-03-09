@@ -1,12 +1,13 @@
 # ─────────────────────────────────────────────────────────────
-# AI Image Platform — CI/CD Pipeline
+# AI Image Platform — CI Pipeline (Build & Push Only)
 # ─────────────────────────────────────────────────────────────
 # Triggers on push to main branch only
-# 3 stages: Test → Build & Push → Deploy
+# 2 stages: Test → Build & Push
 # Builds TWO services: API + Worker
+# NOTE: ArgoCD handles deployment (watches this repo, auto-deploys)
 # ─────────────────────────────────────────────────────────────
 
-name: Deploy AI Image Platform
+name: Build & Push to ECR
 
 on:
   push:
@@ -78,9 +79,6 @@ jobs:
     permissions:
       id-token: write                  # Needed for OIDC authentication
       contents: read
-
-    outputs:
-      image_tag: ${{ steps.meta.outputs.tag }}    # Pass tag to deploy job
 
     steps:
       - name: Checkout code
@@ -154,7 +152,6 @@ jobs:
     name: Deploy to EKS
     runs-on: ubuntu-latest
     needs: build                       # Only runs if build passes!
-
     permissions:
       id-token: write
       contents: read
