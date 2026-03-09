@@ -7,6 +7,11 @@ metadata:
     tier: backend
 spec:
   replicas: {{ .Values.worker.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1  
   selector:
     matchLabels:
       app: ai-image-worker

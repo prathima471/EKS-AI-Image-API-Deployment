@@ -7,6 +7,11 @@ metadata:
     tier: frontend
 spec:
   replicas: {{ .Values.api.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1  
   selector:
     matchLabels:
       app: ai-image-api
