@@ -3,7 +3,7 @@ api:
   replicas: 1
   image:
     repository: 123054099308.dkr.ecr.us-east-1.amazonaws.com/eks-ai-image-dev/api-service
-    tag: "abf3b20"
+    tag: "bbdf2dc"
     pullPolicy: IfNotPresent
   port: 8000
   resources:
@@ -32,7 +32,7 @@ worker:
   replicas: 1
   image:
     repository: 123054099308.dkr.ecr.us-east-1.amazonaws.com/eks-ai-image-dev/worker-service
-    tag: "abf3b20"
+    tag: "bbdf2dc"
     pullPolicy: IfNotPresent
   port: 8001
   resources:
@@ -108,10 +108,8 @@ monitoring:
 # Uncomment and deploy with ArgoCD or Helm when needed
 # alertmanager:
 #   enabled: false
-
 # nodeExporter:
 #   enabled: false
-
 # prometheusOperator:
 #   admissionWebhooks:
 #     enabled: false
