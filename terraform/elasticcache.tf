@@ -1,5 +1,4 @@
 # ── ElastiCache Subnet Group ──
-# "Put Redis in private subnets (secure!)"
 resource "aws_elasticache_subnet_group" "main" {
   name       = "${local.cluster_name}-redis-subnet"
   subnet_ids = aws_subnet.private[*].id               # Private subnets only!
@@ -12,7 +11,7 @@ resource "aws_security_group" "redis" {
   description = "Allow Redis access from EKS nodes"
   vpc_id      = aws_vpc.main.id
 
-  # Allow Redis from private subnets (where EKS nodes are)
+  # Allow Redis from private subnets 
   ingress {
     from_port   = 6379
     to_port     = 6379
