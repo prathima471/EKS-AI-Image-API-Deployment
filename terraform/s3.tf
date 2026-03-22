@@ -9,10 +9,10 @@ resource "aws_s3_bucket" "images" {
   }
 }
 
-# Get current AWS account ID (used to make bucket name unique)
+# Get current AWS account ID 
 data "aws_caller_identity" "current" {}
 
-# Block all public access (images are private!)
+# Block all public access 
 resource "aws_s3_bucket_public_access_block" "images" {
   bucket = aws_s3_bucket.images.id
 
@@ -22,7 +22,7 @@ resource "aws_s3_bucket_public_access_block" "images" {
   restrict_public_buckets = true
 }
 
-# Enable server-side encryption (security best practice)
+# Enable server-side encryption 
 resource "aws_s3_bucket_server_side_encryption_configuration" "images" {
   bucket = aws_s3_bucket.images.id
 
@@ -33,7 +33,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "images" {
   }
 }
 
-# Enable versioning (recover accidentally deleted images)
+# Enable versioning 
 resource "aws_s3_bucket_versioning" "images" {
   bucket = aws_s3_bucket.images.id
 

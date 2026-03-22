@@ -88,7 +88,7 @@ resource "aws_route_table" "public" {
   }
 }
 
-# ── Private Route Table (YOU WERE MISSING THIS!) ──
+# ── Private Route Table ──
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
