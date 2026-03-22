@@ -3,7 +3,7 @@ api:
   replicas: 1
   image:
     repository: 123054099308.dkr.ecr.us-east-1.amazonaws.com/eks-ai-image-dev/api-service
-    tag: "eed8be1"
+    tag: "eb77014"
     pullPolicy: IfNotPresent
   port: 8000
   resources:
@@ -32,7 +32,7 @@ worker:
   replicas: 1
   image:
     repository: 123054099308.dkr.ecr.us-east-1.amazonaws.com/eks-ai-image-dev/worker-service
-    tag: "eed8be1"
+    tag: "eb77014"
     pullPolicy: IfNotPresent
   port: 8001
   resources:
