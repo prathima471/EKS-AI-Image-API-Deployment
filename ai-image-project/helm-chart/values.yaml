@@ -3,7 +3,7 @@ api:
   replicas: 1
   image:
     repository: 123054099308.dkr.ecr.us-east-1.amazonaws.com/eks-ai-image-dev/api-service
-    tag: "2d7da9b"
+    tag: "c2dfcc2"
     pullPolicy: IfNotPresent
   port: 8000
   resources:
@@ -32,7 +32,7 @@ worker:
   replicas: 1
   image:
     repository: 123054099308.dkr.ecr.us-east-1.amazonaws.com/eks-ai-image-dev/worker-service
-    tag: "2d7da9b"
+    tag: "c2dfcc2"
     pullPolicy: IfNotPresent
   port: 8001
   resources:
@@ -133,7 +133,6 @@ monitoring:
 #     requests:
 #       memory: 64Mi
 #       cpu: 25m
-
 # kube-state-metrics:
 #   resources:
 #     requests:
