@@ -71,7 +71,7 @@ resource "aws_iam_openid_connect_provider" "eks" {
 }
 
 # ── App Pod Role (IRSA) ──
-# "Allow API and Worker pods to access S3 — no hardcoded credentials!"
+# "Allow API and Worker pods to access S3 "
 resource "aws_iam_role" "app_pod" {
   name = "${local.cluster_name}-app-pod-role"
 
